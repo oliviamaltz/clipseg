@@ -112,7 +112,7 @@ def crop_square_image(processor, model, input_dir, output_dir):
         cropped_image.save(crop_file)
         print(f" Saved square crop to {crop_file}")
 
-# Main loop over folders
+# main loop over folders
 for folder in all_folders:
     curr_folder = folder.stem
     out_folder = output_path / curr_folder
