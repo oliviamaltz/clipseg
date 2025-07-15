@@ -9,7 +9,7 @@ from glob2 import glob as glob
 import pdb 
 import os
 
-#Coomandline Arguments
+#Commandline Arguments
 parser = argparse.ArgumentParser(description = 'Image Cropping')
 parser.add_argument('-i', '--input_path', default=None)
 parser.add_argument('-o', '--output_path', default=None)
@@ -19,7 +19,7 @@ output_path= args.output_path
 
 #Loading all possible subfolders
 all_folders = glob(f"{input_path}/*/")
-pdb.set_trace()
+
 # Load processor & model
 processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
 model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined")
@@ -27,10 +27,10 @@ model.eval().cuda()
 
 ## Lets pass directories as arguments
 def crop_rimage(processor, model, input_path, output_path):
-
-    im_files = glob(f"{input_path}/*")
+    #pdb.set_trace()
+    #im_files = glob(f"{input_path}/*.jpg") + glob(f"{input_path}/*.jpeg") +glob(f"{input_path}/*.jpg")
     # Loop through image files --> including subfolders
-    for img_path in im_files:
+    for img_path in sorted(Path(input_path).glob("*")):
         if img_path.suffix.lower() not in [".jpg", ".jpeg", ".png"]:
             continue
 
@@ -65,7 +65,7 @@ def crop_rimage(processor, model, input_path, output_path):
         # Get bounding box of mask
         coords = np.argwhere(mask_np_resized > 0)
         if coords.shape[0] == 0:
-            print(f" No object found in mask for {name}. Skipping crop.") # add image name 
+            print(f" No object found in mask for {name}. Skipping crop.") 
             continue
         y_min, x_min = coords.min(axis=0)
         y_max, x_max = coords.max(axis=0)
@@ -95,8 +95,7 @@ def crop_rimage(processor, model, input_path, output_path):
         print(f" Saved cropped image to {crop_file}")
 
 for folder in all_folders:
-    pdb.set_trace()
     curr_folder = folder.split("/")[-2]
     final_output = f"{output_path}/{curr_folder}"
     os.makedirs(final_output,exist_ok=True)
-    crop_rimage(processor,model,curr_folder, final_output)
+    crop_rimage(processor,model,folder, final_output)
