@@ -4,23 +4,33 @@ import numpy as np
 from pathlib import Path
 from PIL import Image
 from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation
+import argparse
+from glob2 import glob as glob
+import pdb 
+import os
+
+#Coomandline Arguments
+parser = argparse.ArgumentParser(description = 'Image Cropping')
+parser.add_argument('-i', '--input_path', default=None)
+parser.add_argument('-o', '--output_path', default=None)
+args = parser.parse_args()
+input_path= args.input_path
+output_path= args.output_path
+
+#Loading all possible subfolders
+all_folders = glob(f"{input_path}/*/")
+pdb.set_trace()
+# Load processor & model
+processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
+model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined")
+model.eval().cuda()
 
 ## Lets pass directories as arguments
-def main():
-    # Load processor & model
-    processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
-    model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined")
-    model.eval().cuda()
+def crop_rimage(processor, model, input_path, output_path):
 
-    # Set directories
-    input_dir = Path("test_stimuli")
-    output_dir = Path("output_masks")
-    crop_dir = Path("rect_crops")
-    output_dir.mkdir(exist_ok=True)
-    crop_dir.mkdir(exist_ok=True)
-
+    im_files = glob(f"{input_path}/*")
     # Loop through image files --> including subfolders
-    for img_path in sorted(input_dir.glob("*")):
+    for img_path in im_files:
         if img_path.suffix.lower() not in [".jpg", ".jpeg", ".png"]:
             continue
 
@@ -48,7 +58,7 @@ def main():
         mask_np_resized = np.array(mask_img)
 
         # Save mask
-        mask_file = output_dir / f"{name}_clipseg_mask.png"
+        mask_file = f"{output_path}/{name}_clipseg_mask.png"
         mask_img.save(mask_file)
         print(f" Saved mask to {mask_file}")
 
@@ -80,9 +90,13 @@ def main():
 
         # Crop and save
         cropped_image = image.crop((x_min_new, y_min_new, x_max_new, y_max_new))
-        crop_file = crop_dir / f"{name}_rectangle.png"
+        crop_file =  f"{output_path}/{name}_rectangle.png"
         cropped_image.save(crop_file)
         print(f" Saved cropped image to {crop_file}")
 
-if __name__ == "__main__":
-    main()
+for folder in all_folders:
+    pdb.set_trace()
+    curr_folder = folder.split("/")[-2]
+    final_output = f"{output_path}/{curr_folder}"
+    os.makedirs(final_output,exist_ok=True)
+    crop_rimage(processor,model,curr_folder, final_output)
